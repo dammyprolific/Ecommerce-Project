@@ -13,7 +13,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
 
 
-ALLOWED_HOSTS = ["ecommerce-project-0l9k.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["shopwithprolific.onrender.com", "localhost", "127.0.0.1"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
