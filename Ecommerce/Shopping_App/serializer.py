@@ -5,14 +5,12 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-# ✅ Product Image Serializer
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image']
 
 
-# ✅ Product List Serializer
 class ProductsSerializer(serializers.ModelSerializer):
     extra_images = ProductImageSerializer(many=True, read_only=True)
     category_display = serializers.SerializerMethodField()
@@ -22,10 +20,10 @@ class ProductsSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'image', 'description', 'category', 'category_display', 'price', 'extra_images']
 
     def get_category_display(self, obj):
-        return obj.get_category_display()  # this returns the human-readable label
-        
+        # Uses Django's built-in method to get the human-readable choice
+        return obj.get_category_display()
 
-# ✅ Product Detail Serializer
+
 class DetailProductSerializer(serializers.ModelSerializer):
     similar_products = serializers.SerializerMethodField()
     category_display = serializers.SerializerMethodField()
@@ -42,7 +40,6 @@ class DetailProductSerializer(serializers.ModelSerializer):
         return obj.get_category_display()
 
 
-# ✅ Cart Item Serializer
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductsSerializer(read_only=True)
     total = serializers.SerializerMethodField()
@@ -55,7 +52,6 @@ class CartItemSerializer(serializers.ModelSerializer):
         return cart_item.product.price * cart_item.quantity
 
 
-# ✅ Full Cart Serializer
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(read_only=True, many=True)
     sum_total = serializers.SerializerMethodField()
@@ -72,7 +68,6 @@ class CartSerializer(serializers.ModelSerializer):
         return sum(item.quantity for item in cart.items.all())
 
 
-# ✅ Simple Cart Stats Serializer
 class SimpleCartSerializer(serializers.ModelSerializer):
     num_of_items = serializers.SerializerMethodField()
 
@@ -84,7 +79,6 @@ class SimpleCartSerializer(serializers.ModelSerializer):
         return sum(item.quantity for item in cart.items.all())
 
 
-# ✅ Cart Item History for Users
 class NewCartItemSerializer(serializers.ModelSerializer):
     product = ProductsSerializer(read_only=True)
     order_id = serializers.SerializerMethodField()
@@ -101,7 +95,6 @@ class NewCartItemSerializer(serializers.ModelSerializer):
         return cart_item.cart.modified_at
 
 
-# ✅ User Info Serializer
 class UserSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField()
 
@@ -125,7 +118,6 @@ class UserSerializer(serializers.ModelSerializer):
         return NewCartItemSerializer(cart_items, many=True).data
 
 
-# ✅ User Registration Serializer
 class CustomUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -137,6 +129,6 @@ class CustomUsersSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User(**validated_data)
-        user.set_password(password)  # hash password
+        user.set_password(password)
         user.save()
         return user
