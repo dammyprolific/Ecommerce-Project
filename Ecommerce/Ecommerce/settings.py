@@ -66,16 +66,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Ecommerce.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'products_db',
-        'USER': 'postgres',
-        'PASSWORD': 'function14',
-        'HOST': 'localhost',
-        'PORT': '5432',
+
+if os.getenv("RENDER") == "True":  # Add this in your Render environment
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=False  # Disable SSL for local PostgreSQL
+        )
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -139,10 +146,4 @@ PAYPAL_MODE = 'live'
 
 REACT_BASE_URL = os.getenv("REACT_BASE_URL" ,"http://localhost:5173")
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True  # Ensure SSL connection for production
-    )
-}
+
