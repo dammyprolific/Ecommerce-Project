@@ -34,9 +34,6 @@ paypalrestsdk.configure({
 })
 
 
-# --------------------
-# 🛍️ PRODUCTS
-# --------------------
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_products(request):
@@ -67,19 +64,31 @@ def add_item(request):
         if not cart_code or not product_id:
             return Response({"error": "cart_code and product_id are required."}, status=400)
 
+        if quantity < 1:
+            return Response({"error": "Quantity must be at least 1."}, status=400)
+
         product = get_object_or_404(Products, id=product_id)
         cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
+
+        # Attach user if authenticated
+        if request.user.is_authenticated and not cart.user:
+            cart.user = request.user
+            cart.save()
+
         cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
         cart_item.quantity = quantity if created else cart_item.quantity + quantity
         cart_item.save()
 
-        serializer = CartItemSerializer(cart_item)
-        return Response({"data": serializer.data, "message": "Item added to cart."}, status=201)
+        cart_serializer = CartSerializer(cart)
+        return Response({
+            "message": "Item added to cart.",
+            "cart": cart_serializer.data
+        }, status=201)
 
     except ValueError:
         return Response({"error": "Quantity must be a number."}, status=400)
     except Exception as e:
-        return Response({"error": str(e)}, status=500)
+        return Response({"error": f"Server error: {str(e)}"}, status=500)
 
 
 @api_view(["GET"])
@@ -92,12 +101,12 @@ def check_product_in_cart(request):
         return Response({"error": "Missing cart_code or product_id"}, status=400)
 
     try:
-        cart = Cart.objects.get(cart_code=cart_code)
+        cart = Cart.objects.get(cart_code=cart_code, paid=False)
         product = Products.objects.get(id=product_id)
         exists = CartItem.objects.filter(cart=cart, product=product).exists()
-        return Response({"check_product_in_cart": exists})
+        return Response({"exists": exists})
     except:
-        return Response({"check_product_in_cart": False})
+        return Response({"exists": False})
 
 
 @api_view(["GET"])
@@ -106,9 +115,11 @@ def get_cart_stat(request):
     cart_code = request.query_params.get("cart_code")
     if not cart_code:
         return Response({"error": "cart_code is required."}, status=400)
+
     cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
     if not cart:
         return Response({"error": "Cart not found or already paid."}, status=404)
+
     serializer = SimpleCartSerializer(cart)
     return Response(serializer.data)
 
@@ -117,6 +128,9 @@ def get_cart_stat(request):
 @permission_classes([AllowAny])
 def get_cart(request):
     cart_code = request.query_params.get("cart_code")
+    if not cart_code:
+        return Response({"error": "cart_code is required."}, status=400)
+
     try:
         cart = Cart.objects.get(cart_code=cart_code, paid=False)
         serializer = CartSerializer(cart)
@@ -130,12 +144,19 @@ def get_cart(request):
 def update_quantity(request):
     try:
         item_id = request.data.get("item_id")
-        quantity = int(request.data.get("quantity"))
+        quantity = int(request.data.get("quantity", 1))
+
+        if quantity < 1:
+            return Response({"error": "Quantity must be at least 1."}, status=400)
+
         cart_item = CartItem.objects.get(id=item_id)
         cart_item.quantity = quantity
         cart_item.save()
+
         serializer = CartItemSerializer(cart_item)
         return Response({"data": serializer.data, "message": "Cart item updated successfully"})
+    except CartItem.DoesNotExist:
+        return Response({"error": "Cart item not found."}, status=404)
     except Exception as e:
         return Response({"error": str(e)}, status=400)
 
@@ -159,11 +180,13 @@ def delete_cartitem(request, item_id):
 def get_username(request):
     return Response({"username": request.user.username})
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_info(request):
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -176,7 +199,6 @@ def create_user(request):
             "user": CustomUsersSerializer(user).data
         }, status=201)
     return Response({"error": serializer.errors}, status=400)
-
 
 # --------------------
 # 💵 PAYMENT (FLUTTERWAVE)

@@ -2,35 +2,47 @@ from rest_framework import serializers
 from .models import Products, Cart, CartItem, ProductImage
 from django.contrib.auth import get_user_model
 
-# Import your custom user model directly if needed:
-from coreUsers.models import CustomUsers
-
 User = get_user_model()
 
+
+# ✅ Product Image Serializer
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image']
 
 
+# ✅ Product List Serializer
 class ProductsSerializer(serializers.ModelSerializer):
     extra_images = ProductImageSerializer(many=True, read_only=True)
+    category_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Products
-        fields = ['id', 'name', 'slug', 'image', 'description', 'category', 'price', "extra_images"]
+        fields = ['id', 'name', 'slug', 'image', 'description', 'category', 'category_display', 'price', 'extra_images']
 
+    def get_category_display(self, obj):
+        return obj.get_category_display()  # this returns the human-readable label
+        
+
+# ✅ Product Detail Serializer
 class DetailProductSerializer(serializers.ModelSerializer):
     similar_products = serializers.SerializerMethodField()
+    category_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Products
-        fields = ['id', 'name', 'price', 'slug', 'image', 'description', 'similar_products']
+        fields = ['id', 'name', 'price', 'slug', 'image', 'description', 'category', 'category_display', 'similar_products']
 
     def get_similar_products(self, obj):
         similar = Products.objects.filter(category=obj.category).exclude(id=obj.id)[:5]
         return ProductsSerializer(similar, many=True).data
 
+    def get_category_display(self, obj):
+        return obj.get_category_display()
+
+
+# ✅ Cart Item Serializer
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductsSerializer(read_only=True)
     total = serializers.SerializerMethodField()
@@ -42,6 +54,8 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_total(self, cart_item):
         return cart_item.product.price * cart_item.quantity
 
+
+# ✅ Full Cart Serializer
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(read_only=True, many=True)
     sum_total = serializers.SerializerMethodField()
@@ -57,6 +71,8 @@ class CartSerializer(serializers.ModelSerializer):
     def get_num_of_items(self, cart):
         return sum(item.quantity for item in cart.items.all())
 
+
+# ✅ Simple Cart Stats Serializer
 class SimpleCartSerializer(serializers.ModelSerializer):
     num_of_items = serializers.SerializerMethodField()
 
@@ -67,6 +83,8 @@ class SimpleCartSerializer(serializers.ModelSerializer):
     def get_num_of_items(self, cart):
         return sum(item.quantity for item in cart.items.all())
 
+
+# ✅ Cart Item History for Users
 class NewCartItemSerializer(serializers.ModelSerializer):
     product = ProductsSerializer(read_only=True)
     order_id = serializers.SerializerMethodField()
@@ -82,11 +100,13 @@ class NewCartItemSerializer(serializers.ModelSerializer):
     def get_order_date(self, cart_item):
         return cart_item.cart.modified_at
 
+
+# ✅ User Info Serializer
 class UserSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField()
 
     class Meta:
-        model = User  # use the correct user model here
+        model = User
         fields = [
             'id',
             'username',
@@ -103,8 +123,9 @@ class UserSerializer(serializers.ModelSerializer):
     def get_items(self, user):
         cart_items = CartItem.objects.filter(cart__user=user, cart__paid=True)[:10]
         return NewCartItemSerializer(cart_items, many=True).data
-    
-    
+
+
+# ✅ User Registration Serializer
 class CustomUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

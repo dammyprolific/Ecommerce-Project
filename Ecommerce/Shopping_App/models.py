@@ -3,6 +3,8 @@ from django.utils.text import slugify
 from django.conf import settings
 
 
+
+
 class Products(models.Model):
     CATEGORY = [
         ("ELECTRONICS", "Electronics"),
