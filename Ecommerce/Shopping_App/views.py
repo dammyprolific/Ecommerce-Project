@@ -38,6 +38,7 @@ paypalrestsdk.configure({
 # 🛍️ PRODUCTS
 # --------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_products(request):
     products = Products.objects.all()
     serializer = ProductsSerializer(products, many=True)
@@ -45,6 +46,7 @@ def get_products(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_product_detail(request, slug):
     product = get_object_or_404(Products, slug=slug)
     serializer = DetailProductSerializer(product)
@@ -55,6 +57,7 @@ def get_product_detail(request, slug):
 # 🛒 CART
 # --------------------
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def add_item(request):
     try:
         cart_code = request.data.get("cart_code")
@@ -80,6 +83,7 @@ def add_item(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def check_product_in_cart(request):
     cart_code = request.query_params.get("cart_code")
     product_id = request.query_params.get("product_id")
@@ -97,6 +101,7 @@ def check_product_in_cart(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_cart_stat(request):
     cart_code = request.query_params.get("cart_code")
     if not cart_code:
@@ -109,6 +114,7 @@ def get_cart_stat(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_cart(request):
     cart_code = request.query_params.get("cart_code")
     try:
@@ -120,6 +126,7 @@ def get_cart(request):
 
 
 @api_view(["PATCH"])
+@permission_classes([AllowAny])
 def update_quantity(request):
     try:
         item_id = request.data.get("item_id")
@@ -134,6 +141,7 @@ def update_quantity(request):
 
 
 @api_view(["DELETE"])
+@permission_classes([AllowAny])
 def delete_cartitem(request, item_id):
     try:
         item = CartItem.objects.get(id=item_id)
