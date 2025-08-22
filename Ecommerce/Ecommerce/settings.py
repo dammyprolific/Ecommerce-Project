@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from corsheaders.defaults import default_headers
+import dj_database_url
 import os
 from dotenv import load_dotenv
 
@@ -137,3 +138,11 @@ PAYPAL_SECRET_KEY = os.environ.get("PAYPAL_SECRET_KEY", "EBrLuxHP_VZUz7tMGKtDDpr
 PAYPAL_MODE = 'live'
 
 REACT_BASE_URL = os.getenv("REACT_BASE_URL" ,"http://localhost:5173")
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.getenv("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True  # Ensure SSL connection for production
+    )
+}
