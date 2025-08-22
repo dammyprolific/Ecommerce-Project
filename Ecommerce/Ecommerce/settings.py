@@ -106,6 +106,7 @@ BASE_URL = "http://localhost:5173"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://shop-c9zj.onrender.com"
 ]
 
 # CORS_ALLOW_HEADERS = list(default_headers) + [
