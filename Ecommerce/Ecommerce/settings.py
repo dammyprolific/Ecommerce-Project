@@ -1,7 +1,5 @@
 from pathlib import Path
 from datetime import timedelta
-from corsheaders.defaults import default_headers
-import dj_database_url
 import os
 from dotenv import load_dotenv
 
@@ -66,23 +64,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Ecommerce.wsgi.application'
 
-
-if os.getenv("RENDER") == "True":  # Add this in your Render environment
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv("DATABASE_URL"),
-            conn_max_age=600,
-            ssl_require=True
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'products_db',
+        'USER': 'postgres',
+        'PASSWORD': 'function14',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
-else:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv("DATABASE_URL"),
-            conn_max_age=600,
-            ssl_require=False  # Disable SSL for local PostgreSQL
-        )
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
